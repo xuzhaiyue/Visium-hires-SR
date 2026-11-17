@@ -1,0 +1,24 @@
+# Code, configuration and documentation only; data and results are not version-controlled
+results/
+data/
+99_tmp/
+Rplots.pdf
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+# Images, web pages and large files inside docs
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.tif
+docs/**/*.tiff
+docs/**/*.pdf
+docs/**/*.svg
+docs/**/*.html
+docs/**/*.html.before
+docs/**/*.gz
+docs/**/*.npz
+docs/**/*.npy
+docs/**/*.pt
+docs/**/*.zip
