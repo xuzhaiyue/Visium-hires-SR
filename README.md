@@ -50,7 +50,7 @@ Input locations are set as constants near the top of each script (for example `/
 
 - **SwinIR.** Network definition `network_swinir.py` and the official `001_classicalSR_DF2K_s64w8_SwinIR-M_x{2,4,8}.pth` weights from https://github.com/JingyunLiang/SwinIR. The directory holding them is set in `sr08c_train_swinir.py`, `sr08t_x8_core.py` and `sr09_scale65_core.py`.
 - **CellViT++.** https://github.com/TIO-IKIM/CellViT-plus-plus, SAM-H model, run in the `cellvit` environment through `scripts/run_cellvit_mps.py`.
-- Trained models and per-figure source data: *(Zenodo DOI)*.
+- Trained models and per-figure source data: https://doi.org/10.5281/zenodo.24314114 (CC BY-NC-SA 4.0).
 
 The blinded labelling and contour-tracing pages were served locally from small HTML templates that are not included. The resulting label and contour files are part of the source data.
 
