@@ -20,7 +20,7 @@ from sr13_paper_figures_pub import C, LAB, MM, W, tag, micro, paired, F
 from sr10_paper_figures import R, R9, S65, PA, HB, CT, img, hires, lapvar
 import sr11_supplementary as S
 
-OUT = R / 'sr_paper_figures_2026-11-12_deep'
+OUT = R / os.environ.get('SR_FIG_OUT', 'sr_paper_figures_2026-11-12_deep')  # set SR_FIG_OUT to redraw into a new folder
 OUT.mkdir(exist_ok=True)
 P.OUT = OUT
 save = P.save
@@ -123,10 +123,13 @@ def fig1():
     x0, y0 = (r0.px * sf - (cx - half)) * um_h, (r0.py * sf - (cy - half)) * um_h
     nb = near[(near.row == r0.row) & (abs(near.col - r0.col) == 2)]
     if len(nb):
-        xn = (nb.iloc[0].px * sf - (cx - half)) * um_h
-        a1.annotate('', (xn, y0), (x0, y0), arrowprops=dict(arrowstyle='<->', color='white', lw=1.0, shrinkA=0, shrinkB=0))
-        a1.text((x0 + xn) / 2, y0 - 8, '100 µm', color='white', ha='center', va='bottom', fontsize=6, fontweight='bold',
-                bbox=dict(boxstyle='round,pad=0.2', fc='black', alpha=0.6, lw=0))
+        # spots in the same array row two columns apart are 100 µm apart; the image may be rotated, so use both coordinates
+        xn, yn = (nb.iloc[0].px * sf - (cx - half)) * um_h, (nb.iloc[0].py * sf - (cy - half)) * um_h
+        a1.annotate('', (xn, yn), (x0, y0), arrowprops=dict(arrowstyle='<->', color='white', lw=1.0, shrinkA=0, shrinkB=0))
+        vert = abs(yn - y0) > abs(xn - x0)  # vertical arrow: rotate the label and place it beside the arrow, clear of diagonal neighbours
+        a1.text((x0 + xn) / 2 + (12 if vert else 0), (y0 + yn) / 2 - (0 if vert else 8), '100 µm', color='white',
+                ha='left' if vert else 'center', va='center' if vert else 'bottom', rotation=90 if vert else 0,
+                fontsize=6, fontweight='bold', bbox=dict(boxstyle='round,pad=0.2', fc='black', alpha=0.6, lw=0))
     a1.set_xlim(0, 2 * half * um_h); a1.set_ylim(2 * half * um_h, 0); a1.set_xticks([]); a1.set_yticks([])
     for s_ in a1.spines.values(): s_.set_color(C['sr']); s_.set_linewidth(1.0)
     a1.set_title('Spots at true scale (500 µm field)', loc='left', fontsize=6.5, fontweight='normal')
@@ -405,7 +408,18 @@ def fig3():
     fn = pd.read_csv(S65 / 'paired/samples' / g / 'spot_features_native.csv')
     cand = fn[(fn.n >= 15) & (fn.n <= 30)].merge(ptn[['patch_id', 'barcode']], on='patch_id')
     cand = cand.merge(pto[['patch_id', 'barcode']].rename(columns={'patch_id': 'old_pid'}), on='barcode')
+    # representative fields: for both models the per-spot nucleus ratio is within 0.06 of the donor-level recovery
+    # (summed over spots with >= 5 native nuclei)
+    fs = pd.read_csv(S65 / 'paired/samples' / g / 'spot_features_sr.csv')[['patch_id', 'n']].rename(columns={'n': 'n_sr'})
+    fo = pd.read_csv(OLD / g / 'spot_features_sr.csv')[['patch_id', 'n']].rename(columns={'patch_id': 'old_pid', 'n': 'n_old'})
+    cand = cand.merge(fs, on='patch_id').merge(fo, on='old_pid')
+    allc = fn[fn.n >= 5].merge(ptn[['patch_id', 'barcode']], on='patch_id').merge(fs, on='patch_id') \
+        .merge(pto[['patch_id', 'barcode']].rename(columns={'patch_id': 'old_pid'}), on='barcode').merge(fo, on='old_pid')
+    rec_sr, rec_old = allc.n_sr.sum() / allc.n.sum(), allc.n_old.sum() / allc.n.sum()
+    cand = cand[((cand.n_sr / cand.n - rec_sr).abs() < 0.06) & ((cand.n_old / cand.n - rec_old).abs() < 0.06)]
+    print(f'Fig 3d: Donor B recovery SR {rec_sr:.2f}, SR08 {rec_old:.2f}; {len(cand)} representative spots', flush=True)
     pick = cand.sample(2, random_state=4)
+    print(pick[['patch_id', 'n', 'n_sr', 'n_old']].to_string(index=False), flush=True)
     r2 = gs[1].subgridspec(2, 4, wspace=0.03, hspace=0.06)
     for i, r in enumerate(pick.itertuples()):
         cn = contours(S65 / 'paired/samples' / g / 'mosaic/native', [r.patch_id])[r.patch_id]

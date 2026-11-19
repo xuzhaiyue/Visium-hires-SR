@@ -72,7 +72,8 @@ def micro(ax, im, title=None, nearest=False, um_px=None, bar_um=20, label=True):
     if um_px:
         h, w = im.shape[:2]; L = bar_um / um_px
         x1 = w * 0.93; y = h * 0.92
-        ax.plot([x1 - L, x1], [y, y], color='white', lw=1.8, solid_capstyle='butt', path_effects=STROKE)
+        # the outline must be wider than the bar itself to be visible on white backgrounds
+        ax.plot([x1 - L, x1], [y, y], color='white', lw=1.8, solid_capstyle='butt', path_effects=[pe.withStroke(linewidth=2.8, foreground='black')])
         if label:
             ax.text(x1 - L / 2, y - h * 0.035, f'{bar_um} µm', color='white', fontsize=6, ha='center', va='bottom',
                     path_effects=[pe.withStroke(linewidth=1.2, foreground='black')])
